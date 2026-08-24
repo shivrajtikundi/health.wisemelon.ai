@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "autoPort": true,
+  "configurations": [
+    {
+      "name": "static",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "exec python3 serve.py"],
+      "port": 4599
+    }
+  ]
+}
