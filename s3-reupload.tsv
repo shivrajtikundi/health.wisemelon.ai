@@ -1,0 +1,43 @@
+# Re-upload manifest — overwrite these S3 keys IN PLACE with the re-encoded
+# local files. Same keys means the hosted HTML needs no change at all.
+# Bucket: bizbotstorage  Region: ap-south-1
+#
+# local_file<TAB>s3_key
+# hero-video.mp4 is already short-GOP and is NOT in this list.
+
+s01.mp4	media_VYANSP6NOpIhyt85LKSPD-Vc-s01.mp4
+s02.mp4	media_EOk6kL7LLGDNKISGz84KQVsv-s02.mp4
+s03.mp4	media_ynGBNsIMY-j64GoH9eWnGOu2-s03.mp4
+s04.mp4	media_z4TrwYOEtNzYv-D_77bN5yDV-s04.mp4
+s05.mp4	media_ZSpZDYkheEtQNLoYZetws5R7-s05.mp4
+s06.mp4	media_8yWRBsHOau2bJYMkg6D3T20M-s06.mp4
+s07.mp4	media__rl3cH1Ru7oun-BX6XJmcUqT-s07.mp4
+s08.mp4	media_xAh3LCZijMOUnaVqsuJIEuf_-s08.mp4
+s09.mp4	media_EeTIeww13rCcXrsSRgRQwDlp-s09.mp4
+s10.mp4	media_6sSbnOrrLXbLrXiF2wLZmluh-s10.mp4
+s11.mp4	media_RwyiwlO9SHdpB0nnJp1fXAG1-s11.mp4
+s12.mp4	media_7CTg90pug7IR-q-AjQ_nhIOg-s12.mp4
+s13.mp4	media__WZlcgUJbB5KKc2chKqpVm2o-s13.mp4
+s14.mp4	media_dZW_PgWZZHo9FKwwjZmE0eC1-s14.mp4
+s15.mp4	media_pA8sAmRXS6USuJVN8iUHrYvI-s15.mp4
+s16.mp4	media_4Bz6J566V3l87r_WB2te8IqU-s16.mp4
+s17.mp4	media_Fyn_blrAeIXFqIknNO_JerWw-s17.mp4
+
+# ---------------------------------------------------------------------------
+# Upload with (needs awscli + credentials for the bucket):
+#
+#   cd "/Users/bizmorphic/Coding/WiseHealth landing page design"
+#   grep -v '^#' s3-reupload.tsv | grep . | while IFS=$'\t' read -r f k; do
+#     aws s3 cp "assets/$f" "s3://bizbotstorage/$k" \
+#       --content-type video/mp4 --cache-control "public, max-age=31536000, immutable"
+#   done
+#
+# The Cache-Control header is worth adding: the objects currently send none, so
+# browsers only heuristically cache them and the boot loader re-downloads the
+# flight far more often than it needs to.
+#
+# The 17 mobile encodes (assets/sNN-m.mp4) are NOT in this list because they
+# have no S3 keys yet. Upload them under any keys you like, then add
+# data-src-mobile="<url>" to each matching <video class="wh-scene"> in
+# wisehealth-updated.html — index.html already has this wired to local paths
+# and shows the exact attribute placement.

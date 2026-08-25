@@ -1,0 +1,7 @@
+# macOS
+.DS_Store
+
+# Superseded video encodes. assets/orig-singlekey/ holds the original
+# single-keyframe clips that were replaced on 2026-08-25; they are ~113 MB and
+# only kept locally as a rollback. See CLAUDE.md §5.
+assets/orig-singlekey/
