@@ -2023,6 +2023,10 @@
   .whl-note{
     margin:26px 0 0; max-width:34ch;
     font-size:14.5px; line-height:1.6; color:var(--mut,#6E6E76); text-wrap:pretty;
+    /* two lines' worth reserved: the phrases differ in length, and letting the
+       block resize under the bar makes the whole panel twitch on every swap */
+    min-height:3.2em;
+    opacity:1; transition:opacity .19s ease;
   }
 
   .whl-skip{
@@ -2040,7 +2044,7 @@
   .whl-skip:focus-visible{ outline:2px solid var(--accent,#12A594); outline-offset:3px; border-radius:4px; }
 
   @media (prefers-reduced-motion: reduce){
-    #wh-loader,.whl-fill,.whl-skip{ transition-duration:.01ms !important; }
+    #wh-loader,.whl-fill,.whl-skip,.whl-note{ transition-duration:.01ms !important; }
     .whl-dot::after,.whl-inner{ animation:none !important; }
   }
 </style>
@@ -2069,16 +2073,40 @@
       '<div class="whl-mark">Wise<span>Health</span></div>' +
       '<p class="whl-eyebrow"><i class="whl-dot" aria-hidden="true"></i>Preparing your site</p>' +
       '<div class="whl-bar"><div class="whl-fill"></div></div>' +
-      '<div class="whl-meta"><span class="whl-pct">0%</span><span class="whl-size">&nbsp;</span></div>' +
-      '<p class="whl-note">Loading the patient journey in high definition, so it plays without stutter.</p>' +
+      '<div class="whl-meta"><span class="whl-pct">0%</span></div>' +
+      '<p class="whl-note">Loading the patient journey in high definition.</p>' +
       '<button class="whl-skip" type="button">Skip and enter &rarr;</button>' +
     '</div>';
   root.appendChild(el);
 
   var fill  = el.querySelector('.whl-fill');
   var pctEl = el.querySelector('.whl-pct');
-  var szEl  = el.querySelector('.whl-size');
+  var noteEl = el.querySelector('.whl-note');
   var skip  = el.querySelector('.whl-skip');
+
+  /* What the line under the bar says, and the percentage at which each one
+     takes over. The megabyte counter used to live here; a number most visitors
+     cannot judge ("is 129 MB a lot?") is worse than no number, and the bar
+     already carries the honest progress. */
+  var PHASES = [
+    [0,  'Loading the patient journey in high definition.'],
+    [30, 'Bringing the scenes together.'],
+    [62, 'Almost there.'],
+    [86, 'Just a moment more.'],
+    [99, 'Ready to launch.']
+  ];
+  var phase = -1;
+  function sayPhase(i) {
+    if (i === phase || !noteEl) return;
+    phase = i;
+    if (reduced) { noteEl.textContent = PHASES[i][1]; return; }
+    // swap at the bottom of a short fade so the line changes rather than morphs
+    noteEl.style.opacity = '0';
+    setTimeout(function () {
+      noteEl.textContent = PHASES[i][1];
+      noteEl.style.opacity = '1';
+    }, 190);
+  }
 
   var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   var phone = matchMedia('(max-width:860px),(pointer:coarse)').matches;
@@ -2096,7 +2124,6 @@
   var done = 0, total = 0, lastByte = Date.now(), finished = false;
   var shown = 0, raf = 0, tock = 0;
 
-  function mb(n) { return (n / 1048576).toFixed(n < 10485760 ? 1 : 0); }
   // One frame of the readout. The bar eases toward the true ratio rather than
   // snapping to it, and is held off 100% until the gate actually lifts — a full
   // bar under a page that is still covered reads as broken.
@@ -2107,7 +2134,9 @@
     if (Math.abs(target - shown) < 0.05) shown = target;
     fill.style.width = shown.toFixed(2) + '%';
     pctEl.textContent = Math.round(shown) + '%';
-    if (total) szEl.textContent = mb(Math.min(done, total)) + ' / ' + mb(total) + ' MB';
+    var i = 0;
+    for (var k = 0; k < PHASES.length; k++) if (shown >= PHASES[k][0]) i = k;
+    sayPhase(i);
   }
   /* rAF for the smooth frame, an interval as the backstop: a tab opened in the
      background parks rAF entirely, and the readout has to be current the moment
@@ -2739,6 +2768,8 @@ select.wh-input{padding-right:34px;cursor:pointer}
 .wh-demo-submit.loading .spin{display:inline-block}
 .wh-demo-submit.loading .ar,.wh-demo-submit.loading .lbl{display:none}
 .wh-demo-note{margin:0;font-size:12px;color:var(--mut);display:flex;align-items:center;gap:7px}
+.wh-demo-err{margin:10px 0 0;font-size:12.5px;line-height:1.5;color:#E5484D;flex-basis:100%}
+.wh-demo-err[hidden]{display:none}
 .wh-demo-note svg{width:13px;height:13px;stroke:var(--accent);fill:none;stroke-width:1.8}
 
 /* success state */
@@ -3051,11 +3082,29 @@ html.wh-navopen .wh-navsheet-cta{opacity:1;transform:none}
   /* the .lede that separates the headline from the checklist is display:none on
      phones, which left the two touching — put the gap back explicitly */
   .wh-demo-points{margin-top:18px}
-  /* The close button is absolutely positioned in this panel's top-right, so the
-     header has to keep clear of it — otherwise the intro line runs underneath
-     the X. Narrower padding and a 44px target made the two collide. */
+  /* Make the card itself the scroller.
+     It was clipping: .wh-demo-dialog is overflow:hidden, and .wh-demo-form's
+     overflow-y:auto never engaged because its grid row is auto-sized — the row
+     grows to fit the fields, so the panel is never shorter than its content and
+     has nothing to scroll. 1120px of form inside a 766px card meant the submit
+     button sat ~230px below the bottom edge, unreachable. Scrolling the whole
+     card also lets the dark intro panel move out of the way instead of holding
+     29% of a phone screen while the fields fight for the rest. */
+  .wh-demo-dialog{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  .wh-demo-grid{max-height:none}
+  .wh-demo-form{overflow:visible}
+
+  /* The close button rides along in the scroll, so pin it: sticky keeps it in
+     the card's top-right the whole way down, and float keeps it out of flow so
+     the heading still starts at the panel's left edge. */
+  /* Content scrolls underneath it, so it needs its own ground — a bare ring
+     over a text field reads as a glitch rather than a control. */
+  .wh-demo-x{position:sticky;top:12px;float:right;margin:0 0 0 12px;z-index:6;
+    background:rgba(255,255,255,.94);
+    -webkit-backdrop-filter:blur(10px) saturate(140%);backdrop-filter:blur(10px) saturate(140%);
+    box-shadow:0 2px 14px rgba(11,11,12,.14),0 0 0 1px rgba(255,255,255,.9)}
   .wh-demo-formwrap > h3,
-  .wh-demo-formwrap > p.sub{padding-right:54px}
+  .wh-demo-formwrap > p.sub{padding-right:8px}
 }
 
 /* ---- forms -------------------------------------------------------------- */
@@ -3573,9 +3622,9 @@ html.wh-navopen .wh-navsheet-cta{opacity:1;transform:none}
                 <span class="msg"></span>
               </div>
               <div class="wh-field">
-                <label for="wd-phone">Phone</label>
-                <input class="wh-input" id="wd-phone" name="phone" type="tel" autocomplete="tel" placeholder="Optional">
-                <span class="msg"></span>
+                <label for="wd-phone">WhatsApp number <span class="req">*</span></label>
+                <input class="wh-input" id="wd-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+91 98765 43210" required>
+                <span class="msg">Enter a valid WhatsApp number</span>
               </div>
               <div class="wh-field">
                 <label for="wd-size">Hospital size</label>
@@ -3599,6 +3648,7 @@ html.wh-navopen .wh-navsheet-cta{opacity:1;transform:none}
             <div class="wh-demo-actions">
               <button class="wh-demo-submit" type="submit"><span class="spin" aria-hidden="true"></span><span class="lbl">Request demo</span> <span class="ar" aria-hidden="true">&#8594;</span></button>
               <p class="wh-demo-note"><svg viewBox="0 0 24 24"><path d="M12 8v5l3 2" stroke-linecap="round"/><circle cx="12" cy="12" r="9"/></svg>We reply within one business day</p>
+              <p class="wh-demo-err" data-demo-err role="alert" hidden></p>
             </div>
           </form>
         </div>
@@ -3837,6 +3887,29 @@ class Component extends DCLogic {
       const formEl = document.getElementById('whDemoForm');
       const setErr = (field, on) => field.closest('.wh-field').classList.toggle('err', on);
       const emailOk = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
+      /* ---- lead trigger -------------------------------------------------
+         WARNING: these credentials are shipped to the browser, and this repo
+         is public and served from GitHub Pages — so anyone can read them in
+         view-source and invoke the endpoint themselves. Nothing client-side
+         can prevent that; the only real fix is to move the call behind a
+         proxy that holds the secret server-side and to rotate this pair.
+         See CLAUDE.md §12. Kept in one block so it is a single edit to move. */
+      const LEAD_API = {
+        url: 'https://api.wisemelon.ai/api/trigger/invoke/6a8de7e8aae0423a74f13a70',
+        key: '10602bd76b5ef23bd4d04c029508b7b2',
+        secret: '78b931e3dd8403583f1657d6158836abd69becf5cdd18486742dd10922c25189'
+      };
+      // "+91 98765 43210" / "09876543210" / "9876543210" -> "919876543210"
+      const digitsOnly = (v) => String(v || '').replace(/\D+/g, '');
+      const normPhone = (v) => {
+        let d = digitsOnly(v);
+        if (d.length === 10) d = '91' + d;                       // bare Indian mobile
+        else if (d.length === 11 && d[0] === '0') d = '91' + d.slice(1);
+        else if (d.length === 13 && d.slice(0, 3) === '091') d = d.slice(1);
+        return d;
+      };
+      const phoneOk = (d) => /^[1-9]\d{9,14}$/.test(d);         // E.164 without the +
       formEl.addEventListener('input', (e) => { if (e.target.closest('.wh-field.err')) setErr(e.target, false); });
       formEl.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -3845,20 +3918,48 @@ class Component extends DCLogic {
         const org = document.getElementById('wd-org');
         let bad = null;
         const check = (el, ok) => { setErr(el, !ok); if (!ok && !bad) bad = el; };
+        const phone = document.getElementById('wd-phone');
         check(name, name.value.trim().length > 1);
         check(email, emailOk(email.value.trim()));
         check(org, org.value.trim().length > 1);
+        // the trigger is a WhatsApp send, so a usable number is now mandatory
+        check(phone, phoneOk(normPhone(phone.value)));
         if (bad) { bad.focus(); return; }
         const btn = formEl.querySelector('.wh-demo-submit');
+        const errEl = panel.querySelector('[data-demo-err]');
+        const showErr = (msg) => { if (!errEl) return; errEl.textContent = msg; errEl.hidden = false; };
+        if (errEl) errEl.hidden = true;
         btn.classList.add('loading'); btn.disabled = true;
-        // TODO: POST Object.fromEntries(new FormData(formEl)) to your booking endpoint here.
-        setTimeout(() => {
-          btn.classList.remove('loading'); btn.disabled = false;
-          panel.classList.add('done');
-          formEl.reset();
-          const done = panel.querySelector('.wh-demo-success .wh-demo-submit');
-          setTimeout(() => { try { done.focus({ preventScroll: true }); } catch (e) {} }, 60);
-        }, 850);
+
+        const data = Object.fromEntries(new FormData(formEl));
+        data.phone = normPhone(data.phone);   // the trigger wants bare digits with country code
+
+        fetch(LEAD_API.url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': LEAD_API.key,
+            'x-api-secret': LEAD_API.secret
+          },
+          body: JSON.stringify(data)
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json().catch(() => ({}));   // a 2xx with no JSON body still counts
+          })
+          .then(() => {
+            btn.classList.remove('loading'); btn.disabled = false;
+            panel.classList.add('done');
+            formEl.reset();
+            const done = panel.querySelector('.wh-demo-success .wh-demo-submit');
+            setTimeout(() => { try { done.focus({ preventScroll: true }); } catch (e) {} }, 60);
+          })
+          .catch((err) => {
+            // Never fake success — the visitor would think a demo was booked.
+            console.error('[wisehealth] lead trigger failed:', err);
+            btn.classList.remove('loading'); btn.disabled = false;
+            showErr("We couldn't send that just now. Please try again, or email hello@wisemelon.ai.");
+          });
       });
     }
 

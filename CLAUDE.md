@@ -336,8 +336,18 @@ seek natively, so memory is unchanged; only the wait moves to the front.
   background parks rAF entirely, and the bar must be current when the visitor
   switches to it. The bar is held off 100% until the gate actually lifts.
 - Design: `WISEHEALTH` wordmark, mono eyebrow with pulsing green dot, 2px
-  `--line` track with `--accent` fill, mono `percent / MB` meta row. Same tokens
-  and easing as the rest of the site.
+  `--line` track with `--accent` fill, mono percentage. Same tokens and easing
+  as the rest of the site. **No megabyte counter** — a number most visitors
+  cannot judge ("is 129 MB a lot?") is worse than no number, and the bar already
+  carries honest progress.
+- **The line under the bar advances with the percentage.** `PHASES` maps a
+  threshold to a phrase — 0 "Loading the patient journey in high definition",
+  30 "Bringing the scenes together", 62 "Almost there", 86 "Just a moment more",
+  99 "Ready to launch". `sayPhase()` only fires on a change and swaps the text
+  at the bottom of a short fade, so the line changes rather than morphs;
+  reduced motion sets it directly. `.whl-note` reserves two lines
+  (`min-height:3.2em`) — the phrases differ in length and the panel twitches on
+  every swap without it.
 - **The real fix is smaller files.** 129 MB of footage is the underlying problem;
   the loader only makes the wait honest. Re-encoding the scenes (and exporting
   the 13 MB laptop SVG as WebP) shortens it directly.
@@ -425,6 +435,21 @@ layout, plus a nav sheet after `</header>` and `mountNav()` in the Component.
   header needs `padding-right` or the intro line runs under the X; and
   `.wh-demo-aside .lede` is `display:none` on phones, which leaves the headline
   touching the checklist unless `.wh-demo-points` carries its own `margin-top`.
+- **On phones the CARD is the scroller, not the form panel.** `.wh-demo-dialog`
+  is `overflow:hidden` and `.wh-demo-form`'s `overflow-y:auto` never engages,
+  because its grid row is auto-sized — the row grows to fit the fields, so the
+  panel is never shorter than its content and has nothing to scroll against.
+  That clipped 1120px of form inside a 766px card and left the submit button
+  ~230px below the bottom edge, **unreachable**: nobody could submit on a phone.
+  Below 720px the dialog takes `overflow-y:auto` (with `overscroll-behavior:
+  contain`), `.wh-demo-grid` drops its `max-height` and the form panel goes back
+  to `overflow:visible`. Scrolling the whole card also lets the dark intro panel
+  move out of the way instead of holding 29% of the screen. The close button
+  becomes `position:sticky` + `float:right` so it stays in the card's top-right
+  the whole way down, and carries its own translucent background — content
+  scrolls under it, and a bare ring over a text field reads as a glitch.
+  **If you ever change the fields, re-check this**: it is the kind of break that
+  looks fine until the form is one row taller than the screen.
 - **Form fields are 16px below 860px.** Anything smaller makes iOS Safari zoom
   the page on focus and strand the visitor scrolled sideways.
 - **The loader takes the light gate on phones** — same
@@ -446,7 +471,39 @@ still in the stylesheet.
 
 ---
 
-## 12. Editing rules / preferences
+## 12. Lead capture (demo form → Wisemelon trigger)
+
+`#whDemoForm` POSTs to the Wisemelon trigger endpoint on submit. The whole
+integration is the `LEAD_API` block plus the `fetch` in the form's submit
+handler — one place to edit.
+
+- **Endpoint:** `POST https://api.wisemelon.ai/api/trigger/invoke/6a8de7e8aae0423a74f13a70`
+  with `x-api-key` / `x-api-secret` headers.
+- **Body:** the whole form (`name`, `email`, `organization`, `role`, `phone`,
+  `size`, `message`). Their example only showed `phone`; the rest is sent
+  alongside so the lead data is not thrown away — **verify their trigger
+  ignores unknown keys**, and trim the body to `{phone}` if it does not.
+- **`phone` is normalised to bare digits with a country code** (`normPhone`) —
+  `+91 98765 43210`, `09876543210` and `9876543210` all become `919876543210`,
+  matching the format in their example. It is now a **required** field, because
+  the trigger is a WhatsApp send and there is nothing to fire without it.
+- **Failure is never faked.** The handler used to show the success panel after
+  an 850ms timer with a `TODO` where the request should be. A non-2xx or a
+  network error now re-enables the button, keeps what the visitor typed, and
+  shows `.wh-demo-err`; only a real 2xx shows the success panel.
+
+> **The key and secret are public.** They ship inside `index.html`, this repo is
+> public, and GitHub Pages serves it — so anyone can read them in view-source
+> and invoke the trigger themselves. No amount of client-side work changes that:
+> a browser cannot hold a secret. The fix is a proxy that keeps the secret
+> server-side (a Cloudflare Worker or Vercel/Netlify function; Pages itself is
+> static-only) with the page posting to the proxy instead. **Rotate this pair
+> once that is in place.** Until then, treat the endpoint as open to the world
+> and make sure it is rate-limited on the server.
+
+---
+
+## 13. Editing rules / preferences
 
 - Preserve all dc mechanics exactly: `<x-dc>`, `<helmet>`, `{{ bindings }}`, `<sc-for>`,
   `data-props`, `style-hover`, the inline `data-dc-script` Component.
