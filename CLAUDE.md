@@ -225,6 +225,8 @@ clears as you scroll; both ease back to full‑bleed centre. Hero uses ONE high�
    grayscale, `⊕` green separators, height ~57px, keyframe `wh-marquee`)
 3. **Appointment** (`#appointment`) — booking demo (see §7)
 4. **Omnichannel** (`#omnichannel`) — animated wheel + laptop (see §8)
+4b. **Integrations** (`#integrations`) — hub + system cards
+4c. **Ticketing** (`#ticketing`) — the second scroll-flight (see §7b)
 5. **Problem** (`#problem`) — sticky headline + numbered hover‑rows
 6. **Platform** (`#platform`) — "One system. Every workflow." 3 tilt cards
 7. **Analytics** (`#analytics`) — count‑up stats + orbit visual
@@ -262,9 +264,102 @@ steps there are — `.appt-track`/`.appt-fill` stay hidden on mobile because the
 positions them in pixels measured from the spread-out dots, which collapse to one
 point once the steps are stacked.
 
+**Section chrome is shared by selector, not duplicated.** `#appointment,
+#raiseticket{padding:150px 40px;max-width:1440px;margin:0 auto}` — and the same
+pairing in the 1100px and 760px queries and in the mobile heading-leading rule.
+Miss one and the second section renders full-bleed with no gutters, which is
+exactly what happened first time round. **Any future id-scoped rule for one must
+name both.**
+
+**There are two of these sections.** `#appointment` (booking) and
+`#raiseticket` (raising a ticket) are the same component with different content:
+the new one reuses the **same `.appt-* classes`** rather than a parallel set,
+because every rule — the phone chrome, the stepper, the mobile re-order, the
+one-step-at-a-time behaviour — is class-based, so it is all inherited for free.
+`mountAppointment(id)` takes the section id and keeps its handles in
+`this._steppers`, so the two run independently (verified: stepping one never
+moves the other). Its clips are `assets/raiseticket/rt-1..4.mp4`, encoded with
+the same recipe as the booking clips. Section order is
+**integrations → ticketing (story) → raiseticket (demo) → footer**, so the
+ticketing story is immediately followed by the thing it describes.
+
 - **To replace the clips:** drop new files with the **same names** (order = step order).
   Keep them 9:16 or they'll cover‑crop. Web‑optimize: `-an -r 30 -crf 22 -pix_fmt yuv420p
   -movflags +faststart` (short GOP not needed here — these play, they aren't scrubbed).
+
+---
+
+## 7b. Ticketing section (`#ticketing`) — the second flight
+
+Sits between Integrations and the footer. It is **the same engine as the hero**,
+mounted a second time — not a second scroll system.
+
+- **The engine is namespaced.** `mountScrollWorld(el, { ns: 'tk' })` keys three
+  things off `ns`: the stylesheet id, the class names it queries (`Q()` rewrites
+  `.wh-` → `.tk-`), and the custom properties it writes on `<html>` (`setVar()`
+  rewrites `--wh-` → `--tk-`). Without that the two flights would fight over
+  `--wh-open` and every `--wh-bN-o`. Default `ns` is `wh`, so the hero is
+  untouched. Debug readout is `window.__tkFlight`.
+- **14 beats, all stills — nothing here is ever scrubbed.** The engine already
+  supported image beats: a non-`VIDEO` element gets `data-dwell` vh of scroll
+  and a slow push-in (`--tk-bN-k`/`-y`) so the camera never stalls on a still.
+  Beat 0 occupies the engine's `.tk-video` slot but is an `<img>` — `makeBeat()`
+  keys off `tagName`, and `ensure()` returns early for anything non-video, so no
+  clip is ever fetched or seeked. Beat 0 is `hero.png`, the care team on white,
+  so it keeps the engine's default `contain` + white ground (the letterbox is
+  invisible against the frame) — and it is 3:2 where every other still is 16:9,
+  so `cover` would crop a third of its height and take the tops of heads.
+  Phones override to `cover`, because in a portrait frame that letterbox is
+  very visible.
+- **No bloom in this flight.** The engine flashes ~0.9 white across the *first*
+  seam — tuning that belongs to the hero, whose clip ends on a near-white frame
+  and drops 118 luminance points into `s01`, so the flash hides a hard cut.
+  Between two cross-dissolving stills the same flash is just a strobe, and it
+  was the flicker at the hero-image-to-scene-1 handoff. `#ticketing .tk-bloom`
+  is `display:none`; every later seam only ever gets the 0.07 whisper, which is
+  why nothing after the first one flickered. **The hero's bloom is untouched.**
+- **Beat 0 is chrome-free on purpose.** No caption article is emitted for it (the
+  engine matches captions by `data-beat`, so it simply has none), and the
+  caption shade is tied to `--tk-b1-o` — it fades in exactly as the first
+  caption does, instead of washing the white opener with a gradient it has
+  nothing to sit behind. The frame carries **no shadow** at any point, so a
+  still shot on white blends into the page rather than reading as a card.
+- **The stage is `align-items:start`.** It is a 100dvh grid, so centring the
+  card left about a fifth of the viewport empty between the heading and the
+  image; top-aligning closes that to the intro's own bottom padding. Once the
+  flight opens, the frame fills the stage and alignment stops mattering.
+- **There is no progress hairline.** `.tk-progress` was removed from the markup;
+  the chapter rail is the only positional cue, which is the one that names where
+  you are rather than just how far in.
+- **The stills are warmed, not left to lazy-load.** All thirteen sit stacked in
+  the same sticky frame at `opacity:0`, so the browser has no reason to fetch
+  them until the moment they are needed — and a beat that has not decoded when
+  its crossfade begins shows nothing. `mountTicketing()` runs an
+  IntersectionObserver with a `1200px` rootMargin that flips them to
+  `loading="eager"` as the section approaches. ~1.3 MB for the set.
+- **Assets are `assets/ticketing/tNN.webp`** plus `-m` siblings, named by beat,
+  so replacing one is a file drop with no markup change. Sources are the raw
+  PNGs in `assets/ticketing assets/` (gitignored, 177 MB); `/tmp/tk-assets.sh`
+  in the session history holds the scene→file mapping used to derive them.
+  **177 MB of PNG became 5.4 MB** — WebP at 1920 (and 1280 for `-m`), and the
+  clip re-encoded short-GOP like every other clip on the page.
+- `makeBeat` now takes `data-src-mobile` for **images as well as video** (it used
+  to require `isVideo`); an `<img>` swaps `src` exactly the same way.
+
+**Order comes from the source filenames, not from inference.** The sources were
+renamed to `hero.png` + `s1.png`..`s13.png`, and the derived files keep those
+names (`hero.webp`, `s01.webp`..`s13.webp`), so beat N is always `sNN` and the
+mapping needs no lookup table. Story: care team → consultation → surgery
+advised → registration desk → registered in Wisemelon → family updated → doctor
+notified → needs help after surgery → QR + "Hi" → raising the request →
+assigned to the department → nurse notified → helped → management review.
+The supplied care-team **clip** is not used; only the still is.
+
+> **Unresolved: the dashboard screenshots may carry real patient data.**
+> `t05` (admissions) and `t11` (ticket detail) show names and a UMR number —
+> "Mayur Bhimanna Tikundi · UMR135636", "PALLE BHARATH REDDY", "KAMAL PRAKASH" —
+> plus browser tabs and an internal URL. This repo is public and Pages serves it.
+> Confirm they are demo records, or blur/re-capture, **before pushing**.
 
 ---
 

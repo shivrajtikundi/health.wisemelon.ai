@@ -2403,7 +2403,7 @@ html:not([data-wh-reduced]) #hero .wh-frame{box-shadow:none;background:#fff;tran
 }
 
 /* ===== Appointment booking section ===== */
-#appointment{padding:150px 40px;max-width:1440px;margin:0 auto}
+#appointment,#raiseticket{padding:150px 40px;max-width:1440px;margin:0 auto}
 .appt-grid{display:grid;grid-template-columns:1.24fr .76fr;gap:70px;align-items:center}
 .appt-left{display:flex;flex-direction:column;gap:clamp(52px,7vh,84px)}
 .appt-eyebrow{display:inline-flex;align-items:center;gap:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:22px}
@@ -2474,14 +2474,14 @@ html:not([data-wh-reduced]) #hero .wh-frame{box-shadow:none;background:#fff;tran
 .wh-plus{color:var(--accent);font-size:29px;line-height:1;flex-shrink:0}
 
 @media (max-width:1100px){
- #appointment{padding:110px 40px}
+ #appointment,#raiseticket{padding:110px 40px}
  .appt-grid{grid-template-columns:1fr;gap:56px}
  .appt-left{gap:52px}
  .appt-phone{max-width:320px}
  .appt-nav{margin-bottom:28px}
 }
 @media (max-width:760px){
- #appointment{padding:90px 22px}
+ #appointment,#raiseticket{padding:90px 22px}
  .appt-track,.appt-fill{display:none}
  .appt-steps{flex-direction:column;gap:22px}
  .appt-step{flex-direction:row;align-items:center;text-align:left;gap:16px}
@@ -2823,6 +2823,106 @@ select.wh-input{padding-right:34px;cursor:pointer}
 
 
 /* ==========================================================================
+   Ticketing flight
+   --------------------------------------------------------------------------
+   The engine emits the structural CSS for `.tk-*` itself (same rules as the
+   hero, namespaced). What follows is only this section's own dressing — the
+   same additions #hero makes on top of the engine, so the two read as one
+   design rather than two implementations.
+   ========================================================================== */
+#ticketing{position:relative;padding:0;background:#fff}
+
+#ticketing .tk-intro{padding:clamp(110px,13vw,150px) clamp(22px,4vw,64px) clamp(14px,1.6vw,22px);text-align:center;max-width:900px;margin:0 auto}
+/* The stage is a 100dvh grid; centring the card in it left roughly a fifth of
+   the viewport empty between the heading and the image. Top-align instead, so
+   the image starts straight under the copy. Once the flight opens the frame
+   fills the stage anyway and alignment stops mattering. */
+#ticketing .tk-stage{align-items:start}
+#ticketing .tk-eyebrow{display:inline-flex;align-items:center;gap:12px;margin-bottom:26px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--accent)}
+#ticketing .tk-eyebrow::before{content:"";width:26px;height:2px;background:var(--accent);border-radius:2px}
+#ticketing .tk-intro h2{margin:0;font-size:clamp(38px,4.6vw,76px);line-height:.98;letter-spacing:-.035em;font-weight:500;color:var(--ink)}
+#ticketing .tk-intro h2 span{color:var(--accent)}
+#ticketing .tk-intro > p{margin:30px auto 0;max-width:560px;font-size:16px;line-height:1.65;color:var(--mut);text-wrap:pretty}
+
+html:not([data-tk-reduced]) #ticketing{--tk-card-h:min(58vh,560px);--tk-card-w:min(1160px,95vw)}
+/* No bloom here. The engine flashes ~0.9 white across the FIRST seam, which is
+   tuned for the hero: that clip ends on a near-white frame and drops 118 points
+   of luminance into s01, so the flash covers a hard cut. This section
+   cross-dissolves two stills, where the same flash is just a strobe — and it is
+   exactly the flicker at the hero-image-to-scene-1 handoff. Every other seam
+   only ever gets the 0.07 whisper, which is why nothing later flickered. */
+#ticketing .tk-bloom{display:none}
+
+/* Beat 0 (hero.png) is the care team shot on white, so the engine's default
+   contain + white ground is right: the letterbox is invisible against the
+   frame. It is also 3:2 where every other still is 16:9 — cover would crop a
+   third of its height and take the tops of heads. Phones get cover instead
+   (below), because in a portrait frame that letterbox is very visible. */
+/* No shadow at any point: beat 0 is shot on white and a shadow would draw a
+   card edge around something meant to blend into the page. */
+html:not([data-tk-reduced]) #ticketing .tk-frame{box-shadow:none;background:#fff}
+
+/* captions — same scale and rhythm as the hero's */
+#ticketing .tk-beat{max-width:660px;position:relative;z-index:1}
+#ticketing .tk-beat::before{display:none !important}
+/* one fixed gradient on the container rather than a pseudo per beat, so
+   scrubbing has nothing extra to repaint (same reason as the hero) */
+/* Tied to beat 1's own fade, so the shade arrives exactly as the first caption
+   does. Beat 0 carries no copy, so darkening the white opener under it would
+   be shading nothing. */
+#ticketing .tk-beats::after{content:"";position:absolute;left:0;right:0;bottom:0;height:58%;z-index:0;pointer-events:none;
+  opacity:var(--tk-b1-o,0);
+  background:linear-gradient(180deg,rgba(6,10,8,0) 0%,rgba(6,10,8,.30) 34%,rgba(6,10,8,.60) 66%,rgba(6,10,8,.86) 100%)}
+#ticketing .tk-beat-eyebrow{display:inline-flex;align-items:center;gap:14px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.2em;
+  margin-bottom:16px;color:#7FD1C0}
+#ticketing .tk-beat-eyebrow::after{content:"";width:44px;height:1.5px;background:currentColor;opacity:.6}
+#ticketing .tk-beat > p:not(.tk-beat-body){font-size:clamp(28px,3.4vw,46px);line-height:1.04;font-weight:500;
+  letter-spacing:-.03em;margin:0 0 16px;max-width:15ch;color:#fff}
+#ticketing .tk-beat-body{font-size:clamp(15px,1.35vw,18px);line-height:1.55;color:rgba(255,255,255,.82);
+  max-width:588px;margin:0 0 22px;text-shadow:0 1px 22px rgba(6,6,8,.55)}
+#ticketing .tk-beat-tags{display:flex;flex-wrap:wrap;gap:10px}
+#ticketing .tk-beat-tags span{display:inline-flex;align-items:center;border:1px solid rgba(255,255,255,.28);
+  border-radius:999px;padding:7px 14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.9)}
+
+/* chapter rail — same pill treatment as the hero's */
+#ticketing .tk-rail{gap:13px}
+#ticketing .tk-rail-item{padding:7px 6px;gap:11px;border:1px solid transparent;border-radius:999px;
+  transition:background .4s ease,border-color .4s ease,padding .4s ease}
+#ticketing .tk-rail-item .tk-rail-label{max-width:0;overflow:hidden;opacity:0;
+  transition:max-width .5s cubic-bezier(.22,1,.36,1),opacity .4s ease}
+#ticketing .tk-rail-dot{width:7px;height:7px}
+#ticketing .tk-rail-item[data-active="1"]{background:rgba(16,20,22,.5);border-color:rgba(255,255,255,.18);padding:7px 14px 7px 12px}
+#ticketing .tk-rail-item[data-active="1"] .tk-rail-label{max-width:220px;opacity:1;color:#fff}
+#ticketing .tk-rail-item[data-active="1"] .tk-rail-dot{background:var(--accent) !important;transform:scale(1.35)}
+
+
+@media (max-width:860px),(pointer:coarse){
+  /* edge to edge, same as the hero flight — and for the same two reasons:
+     the blanket section padding, and an engine mobile rule that loses on
+     specificity to the id-scoped card width above */
+  #ticketing{padding-left:0 !important;padding-right:0 !important}
+  html:not([data-tk-reduced]) #ticketing.tk-flight{--tk-card-w:100%}
+  #ticketing .tk-frame{border-radius:0;box-shadow:none}
+  /* portrait: a 3:2 still inside a 9:16 frame is mostly letterbox */
+  #ticketing .tk-video{object-fit:cover;object-position:var(--tk-focus,50%) 50%}
+  #ticketing .tk-beats{padding:0 20px calc(22px + env(safe-area-inset-bottom,0px));align-items:end}
+  #ticketing .tk-beat{max-width:none}
+  #ticketing .tk-intro{padding-left:22px;padding-right:22px}
+  #ticketing .tk-intro h2{line-height:1.05 !important;letter-spacing:-.028em !important}
+  /* one tag in the top-left instead of a dot column on the right edge */
+  #ticketing .tk-rail{left:20px;right:auto;transform:none;
+    top:calc(env(safe-area-inset-top,0px) + 82px);flex-direction:row;align-items:flex-start;gap:0}
+  #ticketing .tk-rail-item{display:none}
+  #ticketing .tk-rail-item[data-active="1"]{display:inline-flex;flex-direction:row-reverse;gap:8px;
+    padding:7px 13px 7px 11px;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+  #ticketing .tk-rail-label{display:inline;font-size:10.5px;letter-spacing:.14em}
+}
+
+/* ==========================================================================
    Mobile / compact adaptation
    --------------------------------------------------------------------------
    Appended last so it wins on source order without a wall of !important.
@@ -2944,7 +3044,7 @@ html.wh-navopen .wh-navsheet-cta{opacity:1;transform:none}
   /* Leading and tracking are size-specific, not one ratio scaled down. .98
      and -.035em are right for a 76px display line; at 38px, wrapped over three
      lines on a phone, they read as cramped. */
-  .wh-intro h1,#appointment h2,#omnichannel h2,#integrations h2,#book h2{
+  .wh-intro h1,#appointment h2,#raiseticket h2,#omnichannel h2,#integrations h2,#book h2{
     line-height:1.05 !important;letter-spacing:-.028em !important}
   #hero .wh-intro > p{font-size:15.5px !important;line-height:1.6 !important}
   /* the eyebrow was wrapping to two lines and orphaning its leading dash */
@@ -3527,6 +3627,216 @@ html.wh-navopen .wh-navsheet-cta{opacity:1;transform:none}
 </section>
 
 
+<!-- ==========================================================================
+     Ticketing — a second scroll-flight driven by the SAME engine as the hero,
+     under the `tk` namespace (mountScrollWorld's `ns` option) so the two never
+     share a CSS variable.
+
+     Stills only: no video, nothing is ever scrubbed. Beat 0 occupies the
+     engine's `.tk-video` slot as an <img>; makeBeat() keys off tagName, so it is
+     a still like the rest and ensure() never fetches a clip for it.
+
+     Asset ids match the source filenames in "assets/ticketing assets/" one for
+     one (hero, s1..s13), so replacing an image is a file drop.
+     ========================================================================== -->
+<section id="ticketing" class="tk-flight">
+  <div class="tk-intro">
+    <div class="tk-eyebrow">Patient support</div>
+    <h2>From a message<br>to a <span>resolution.</span></h2>
+    <p>One request, followed all the way through the hospital — raised on WhatsApp, routed to a person, and counted at the end.</p>
+  </div>
+
+  <div class="tk-track">
+    <div class="tk-stage">
+      <div class="tk-frame">
+        <img class="tk-video" src="assets/ticketing/hero.webp" data-src-mobile="assets/ticketing/hero-m.webp" data-dwell="44" decoding="async" alt="The people behind every request">
+        <img class="tk-scene" data-scene="1" data-dwell="44" src="assets/ticketing/s01.webp" data-src-mobile="assets/ticketing/s01-m.webp" loading="lazy" decoding="async" alt="It starts with a consultation">
+        <img class="tk-scene" data-scene="2" data-dwell="44" src="assets/ticketing/s02.webp" data-src-mobile="assets/ticketing/s02-m.webp" loading="lazy" decoding="async" alt="Surgery is recommended">
+        <img class="tk-scene" data-scene="3" data-dwell="44" src="assets/ticketing/s03.webp" data-src-mobile="assets/ticketing/s03-m.webp" loading="lazy" decoding="async" alt="At the registration desk">
+        <img class="tk-scene" data-scene="4" data-dwell="44" src="assets/ticketing/s04.webp" data-src-mobile="assets/ticketing/s04-m.webp" loading="lazy" decoding="async" alt="Registered in Wisemelon">
+        <img class="tk-scene" data-scene="5" data-dwell="44" src="assets/ticketing/s05.webp" data-src-mobile="assets/ticketing/s05-m.webp" loading="lazy" decoding="async" alt="The family is kept in the loop">
+        <img class="tk-scene" data-scene="6" data-dwell="44" src="assets/ticketing/s06.webp" data-src-mobile="assets/ticketing/s06-m.webp" loading="lazy" decoding="async" alt="The doctor is notified">
+        <img class="tk-scene" data-scene="7" data-dwell="44" src="assets/ticketing/s07.webp" data-src-mobile="assets/ticketing/s07-m.webp" loading="lazy" decoding="async" alt="After surgery, help is needed">
+        <img class="tk-scene" data-scene="8" data-dwell="44" src="assets/ticketing/s08.webp" data-src-mobile="assets/ticketing/s08-m.webp" loading="lazy" decoding="async" alt="One scan, then just “Hi”">
+        <img class="tk-scene" data-scene="9" data-dwell="44" src="assets/ticketing/s09.webp" data-src-mobile="assets/ticketing/s09-m.webp" loading="lazy" decoding="async" alt="Raising the request">
+        <img class="tk-scene" data-scene="10" data-dwell="44" src="assets/ticketing/s10.webp" data-src-mobile="assets/ticketing/s10-m.webp" loading="lazy" decoding="async" alt="Assigned to the right team">
+        <img class="tk-scene" data-scene="11" data-dwell="44" src="assets/ticketing/s11.webp" data-src-mobile="assets/ticketing/s11-m.webp" loading="lazy" decoding="async" alt="The nurse is notified">
+        <img class="tk-scene" data-scene="12" data-dwell="44" src="assets/ticketing/s12.webp" data-src-mobile="assets/ticketing/s12-m.webp" loading="lazy" decoding="async" alt="Help arrives">
+        <img class="tk-scene" data-scene="13" data-dwell="44" src="assets/ticketing/s13.webp" data-src-mobile="assets/ticketing/s13-m.webp" loading="lazy" decoding="async" alt="Everything, tracked">
+        <div class="tk-scrim"></div>
+        <div class="tk-bloom"></div>
+      </div>
+
+      <div class="tk-beats">
+        <article class="tk-beat" data-beat="1">
+          <span class="tk-beat-eyebrow">The visit</span>
+          <p>It starts with a consultation</p>
+          <p class="tk-beat-body">A patient comes in to see the doctor, and the record starts the moment they do.</p>
+          <div class="tk-beat-tags"><span>Consultation</span></div>
+        </article>
+        <article class="tk-beat" data-beat="2">
+          <span class="tk-beat-eyebrow">The plan</span>
+          <p>Surgery is recommended</p>
+          <p class="tk-beat-body">The doctor advises surgery and takes the family through what happens next.</p>
+          <div class="tk-beat-tags"><span>Care plan</span><span>Next steps</span></div>
+        </article>
+        <article class="tk-beat" data-beat="3">
+          <span class="tk-beat-eyebrow">Admission</span>
+          <p>At the registration desk</p>
+          <p class="tk-beat-body">The patient and their family arrive to register — once, not four times over.</p>
+          <div class="tk-beat-tags"><span>Single intake</span></div>
+        </article>
+        <article class="tk-beat" data-beat="4">
+          <span class="tk-beat-eyebrow">Admission</span>
+          <p>Registered in Wisemelon</p>
+          <p class="tk-beat-body">Staff admit the patient in Wisemelon, and every downstream team sees it at once.</p>
+          <div class="tk-beat-tags"><span>Digital intake</span><span>Bed assigned</span></div>
+        </article>
+        <article class="tk-beat" data-beat="5">
+          <span class="tk-beat-eyebrow">Confirmation</span>
+          <p>The family is kept in the loop</p>
+          <p class="tk-beat-body">The son gets the date, time and instructions on WhatsApp — nothing to lose or forget.</p>
+          <div class="tk-beat-tags"><span>WhatsApp</span><span>No paperwork</span></div>
+        </article>
+        <article class="tk-beat" data-beat="6">
+          <span class="tk-beat-eyebrow">Confirmation</span>
+          <p>The doctor is notified</p>
+          <p class="tk-beat-body">The scheduled surgery reaches the doctor in real time, patient and slot attached.</p>
+          <div class="tk-beat-tags"><span>Real time</span></div>
+        </article>
+        <article class="tk-beat" data-beat="7">
+          <span class="tk-beat-eyebrow">The stay</span>
+          <p>After surgery, help is needed</p>
+          <p class="tk-beat-body">A nurse, a bedsheet, a hand to the washroom — the things that decide how a stay feels.</p>
+          <div class="tk-beat-tags"><span>Every request counts</span></div>
+        </article>
+        <article class="tk-beat" data-beat="8">
+          <span class="tk-beat-eyebrow">The ask</span>
+          <p>One scan, then just “Hi”</p>
+          <p class="tk-beat-body">The patient scans the code by the bed and WhatsApp opens. No app, no phone number.</p>
+          <div class="tk-beat-tags"><span>QR</span><span>No install</span></div>
+        </article>
+        <article class="tk-beat" data-beat="9">
+          <span class="tk-beat-eyebrow">The ask</span>
+          <p>Raising the request</p>
+          <p class="tk-beat-body">They tap what they need and a ticket is raised — no desk, no ringing, no hold music.</p>
+          <div class="tk-beat-tags"><span>Self-serve</span><span>Ticketed</span></div>
+        </article>
+        <article class="tk-beat" data-beat="10">
+          <span class="tk-beat-eyebrow">The response</span>
+          <p>Assigned to the right team</p>
+          <p class="tk-beat-body">Management routes it to the department that owns it, with an SLA already running.</p>
+          <div class="tk-beat-tags"><span>SLA tracked</span><span>Assigned</span></div>
+        </article>
+        <article class="tk-beat" data-beat="11">
+          <span class="tk-beat-eyebrow">The response</span>
+          <p>The nurse is notified</p>
+          <p class="tk-beat-body">The message reaches the assigned nurse with the ward, bed and task already filled in.</p>
+          <div class="tk-beat-tags"><span>On the floor</span></div>
+        </article>
+        <article class="tk-beat" data-beat="12">
+          <span class="tk-beat-eyebrow">The response</span>
+          <p>Help arrives</p>
+          <p class="tk-beat-body">Someone shows up and the patient is looked after. That is the point of everything above.</p>
+          <div class="tk-beat-tags"><span>Closed the loop</span></div>
+        </article>
+        <article class="tk-beat" data-beat="13">
+          <span class="tk-beat-eyebrow">Insight</span>
+          <p>Everything, tracked</p>
+          <p class="tk-beat-body">Management reviews response times, resolution rates and workload by team.</p>
+          <div class="tk-beat-tags"><span>Response time</span><span>Resolution</span><span>Trends</span></div>
+        </article>
+      </div>
+
+      <div class="tk-rail" aria-hidden="true">
+        <div class="tk-rail-item" data-from="0" data-to="4" data-active="1"><span class="tk-rail-label">Admission</span><span class="tk-rail-dot"></span></div>
+        <div class="tk-rail-item" data-from="5" data-to="6" data-active="0"><span class="tk-rail-label">Confirmed</span><span class="tk-rail-dot"></span></div>
+        <div class="tk-rail-item" data-from="7" data-to="9" data-active="0"><span class="tk-rail-label">The request</span><span class="tk-rail-dot"></span></div>
+        <div class="tk-rail-item" data-from="10" data-to="12" data-active="0"><span class="tk-rail-label">The response</span><span class="tk-rail-dot"></span></div>
+        <div class="tk-rail-item" data-from="13" data-to="13" data-active="0"><span class="tk-rail-label">Insight</span><span class="tk-rail-dot"></span></div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ==========================================================================
+     Raising a ticket — the booking section's twin. Deliberately reuses the same
+     .appt-* classes rather than a parallel set: the CSS and every responsive
+     rule are class-based, so this section inherits the phone chrome, the
+     stepper, the mobile re-order and the one-step-at-a-time behaviour for free.
+     mountAppointment() takes the section id, so the two run independently.
+     Clips live in assets/raiseticket/, named by step order.
+     ========================================================================== -->
+<section id="raiseticket">
+  <div class="appt-grid">
+    <div class="appt-left">
+      <div>
+        <div data-reveal="up" class="appt-eyebrow" style="opacity:0;transform:translate3d(0,20px,0);transition:opacity .9s cubic-bezier(.22,1,.36,1),transform .9s cubic-bezier(.22,1,.36,1)">Ticketing engine</div>
+        <h2 style="margin:0;font-size:clamp(38px,4.6vw,76px);line-height:.98;letter-spacing:-.035em;font-weight:500">
+          <span data-reveal="mask" data-delay="60" style="display:block;overflow:hidden"><span style="display:block;transform:translate3d(0,110%,0);transition:transform 1.05s cubic-bezier(.22,1,.36,1)">Help, without</span></span>
+          <span data-reveal="mask" data-delay="140" style="display:block;overflow:hidden"><span style="display:block;transform:translate3d(0,110%,0);transition:transform 1.05s cubic-bezier(.22,1,.36,1)">the <span style="color:var(--accent)">call button.</span></span></span>
+        </h2>
+        <p data-reveal="up" data-delay="280" style="margin:30px 0 0;max-width:480px;font-size:16px;line-height:1.65;color:#6E6E76;opacity:0;transform:translate3d(0,22px,0);transition:opacity .9s cubic-bezier(.22,1,.36,1),transform .9s cubic-bezier(.22,1,.36,1);text-wrap:pretty">A patient asks for what they need from the bed they are already in. No call bell, no walk to the desk, no waiting to be noticed — and every request is tracked from the moment it is raised.</p>
+        <div data-reveal="up" data-delay="380" class="appt-badge" style="opacity:0;transform:translate3d(0,22px,0);transition:opacity .9s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1)"><span class="dot"></span>Runs on WhatsApp — nothing to install</div>
+      </div>
+
+      <div>
+        <div data-reveal="up" data-delay="60" class="appt-nav" style="opacity:0;transform:translate3d(0,18px,0);transition:opacity .9s cubic-bezier(.22,1,.36,1),transform .9s cubic-bezier(.22,1,.36,1)">
+          <button class="appt-arrow" data-prev type="button" aria-label="Previous step"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 6l-6 6 6 6"/><path d="M11 6l-6 6 6 6"/></svg></button>
+          <button class="appt-arrow" data-next type="button" aria-label="Next step"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 6l6 6-6 6"/><path d="M13 6l6 6-6 6"/></svg></button>
+        </div>
+        <div data-reveal="up" data-delay="140" class="appt-stepper" style="opacity:0;transform:translate3d(0,22px,0);transition:opacity .9s cubic-bezier(.22,1,.36,1),transform .9s cubic-bezier(.22,1,.36,1)">
+          <div class="appt-track"></div>
+          <div class="appt-fill"></div>
+          <div class="appt-steps">
+            <button class="appt-step" data-active="1" type="button"><span class="appt-dot"></span><span class="appt-stepmeta"><span class="appt-num">Step 01</span><span class="appt-label">Scan the code by the bed and send &ldquo;Hi&rdquo; — the hospital answers straight away</span></span></button>
+            <button class="appt-step" type="button"><span class="appt-dot"></span><span class="appt-stepmeta"><span class="appt-num">Step 02</span><span class="appt-label">Browse what you can ask for — nursing, housekeeping, meals, maintenance</span></span></button>
+            <button class="appt-step" type="button"><span class="appt-dot"></span><span class="appt-stepmeta"><span class="appt-num">Step 03</span><span class="appt-label">Pick the request and raise the ticket, in a couple of taps</span></span></button>
+            <button class="appt-step" type="button"><span class="appt-dot"></span><span class="appt-stepmeta"><span class="appt-num">Step 04</span><span class="appt-label">Get a confirmation with the ticket number and who is coming</span></span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div data-reveal="scale" data-delay="220" class="appt-phone-wrap" style="opacity:0;transform:translate3d(0,30px,0) scale(.96);transition:opacity 1.1s cubic-bezier(.22,1,.36,1),transform 1.1s cubic-bezier(.22,1,.36,1)">
+      <div class="appt-phone">
+        <div class="appt-screen">
+          <div class="appt-topbar">
+            <div class="appt-status">
+              <span>9:41</span>
+              <span class="r">
+                <svg width="16" height="10" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+                <svg width="15" height="11" viewBox="0 0 16 12" fill="currentColor"><path d="M8 10.6l2.1-2.6a3 3 0 0 0-4.2 0zM8 5.2c1.7 0 3.3.6 4.5 1.8l1.4-1.7a9 9 0 0 0-11.8 0L3.5 7A6.5 6.5 0 0 1 8 5.2z"/></svg>
+                <svg width="24" height="11" viewBox="0 0 25 12"><rect x="1" y="1" width="20" height="10" rx="3" fill="none" stroke="currentColor" stroke-opacity=".4"/><rect x="2.5" y="2.5" width="15" height="7" rx="1.5" fill="currentColor"/><rect x="22" y="4" width="1.6" height="4" rx="1" fill="currentColor" fill-opacity=".4"/></svg>
+              </span>
+            </div>
+            <div class="appt-warow">
+              <svg class="appt-back" width="11" height="18" viewBox="0 0 12 20" fill="none" stroke="#E9EDEF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L3 10l7 8"/></svg>
+              <span class="appt-avatar"><svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><path d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z"/></svg></span>
+              <span class="appt-waname"><b>Wise Health <svg class="appt-tick" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#1D9BF0"/><path d="M7 12.4l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></b><span>online</span></span>
+              <span class="appt-waicons">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-6 4.5L23 16z"/><rect x="1.5" y="5.5" width="15.5" height="13" rx="2.5"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16.5v2.6a2 2 0 0 1-2.2 2 19.6 19.6 0 0 1-8.5-3 19.3 19.3 0 0 1-6-6 19.6 19.6 0 0 1-3-8.6A2 2 0 0 1 3.9 2H6.6a2 2 0 0 1 2 1.7c.1.9.4 1.7.7 2.5a2 2 0 0 1-.5 2.1L7.7 9.5a16 16 0 0 0 6 6l1.2-1.1a2 2 0 0 1 2.1-.5c.8.3 1.6.6 2.5.7a2 2 0 0 1 1.7 2z"/></svg>
+              </span>
+            </div>
+          </div>
+          <div class="appt-videoarea">
+            <!-- portrait 9:16 clips, order = step order; swap the files to replace them -->
+            <video class="appt-video is-on" src="assets/raiseticket/rt-1.mp4" poster="assets/raiseticket/rt-1.jpg" muted playsinline preload="auto" disablepictureinpicture aria-hidden="true"></video>
+            <video class="appt-video" src="assets/raiseticket/rt-2.mp4" poster="assets/raiseticket/rt-2.jpg" muted playsinline preload="auto" disablepictureinpicture aria-hidden="true"></video>
+            <video class="appt-video" src="assets/raiseticket/rt-3.mp4" poster="assets/raiseticket/rt-3.jpg" muted playsinline preload="auto" disablepictureinpicture aria-hidden="true"></video>
+            <video class="appt-video" src="assets/raiseticket/rt-4.mp4" poster="assets/raiseticket/rt-4.jpg" muted playsinline preload="auto" disablepictureinpicture aria-hidden="true"></video>
+            <div class="appt-glass"></div>
+          </div>
+          <div class="appt-bottombar"><span class="appt-home"></span></div>
+          <div class="appt-island"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="book" style="padding:140px 40px 120px;background:#0B0B0C;color:#FFFFFF">
   <div style="max-width:1440px;margin:0 auto">
     <div data-reveal="up" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:34px;opacity:0;transform:translate3d(0,20px,0);transition:opacity .9s cubic-bezier(.22,1,.36,1),transform .9s cubic-bezier(.22,1,.36,1)">Get started</div>
@@ -3689,8 +3999,10 @@ class Component extends DCLogic {
     this.railHandlers();
     setTimeout(() => this.failsafe(), 2600);
     this.mountFlight();
+    this.mountTicketing();
     this.mountNav();
-    this.mountAppointment();
+    this.mountAppointment('appointment');
+    this.mountAppointment('raiseticket');
     this.mountOmni();
     this.mountIntegration();
     this.mountDemo();
@@ -3702,9 +4014,13 @@ class Component extends DCLogic {
     if (this.io) this.io.disconnect();
     if (this._fp) clearInterval(this._fp);
     if (this._flight) this._flight.destroy();
-    if (this._apptIO) this._apptIO.disconnect();
-    if (this._apptResize) window.removeEventListener('resize', this._apptResize);
-    if (this._apptRaf) cancelAnimationFrame(this._apptRaf);
+    if (this._ticketing) this._ticketing.destroy();
+    if (this._tkIO) this._tkIO.disconnect();
+    (this._steppers || []).forEach((s) => {
+      if (s.io) s.io.disconnect();
+      if (s.resize) window.removeEventListener('resize', s.resize);
+      if (s.raf) cancelAnimationFrame(s.raf);
+    });
     if (this._navOff) this._navOff();
     if (this._omniIO) this._omniIO.disconnect();
     if (this._intgIO) this._intgIO.disconnect();
@@ -3713,6 +4029,35 @@ class Component extends DCLogic {
     if (this._demoExit) document.removeEventListener('mouseout', this._demoExit);
     if (this._demoOver) document.removeEventListener('mouseover', this._demoOver);
     if (this._demoScroll) window.removeEventListener('scroll', this._demoScroll);
+  }
+
+  /* The ticketing story — the same scroll-flight engine as the hero, mounted a
+     second time under the `tk` namespace so the two never share a CSS variable.
+     Beat 0 is the supplied video; the rest are stills, which the engine drives
+     with a slow push-in of its own. Paced a little quicker than the hero: a
+     still needs less scroll than a moving shot to register. */
+  mountTicketing() {
+    const sec = document.getElementById('ticketing');
+    if (!sec || !window.mountScrollWorld) return;
+    this._ticketing = window.mountScrollWorld(sec, {
+      ns: 'tk',
+      weights: { vhPerSec: 18, minBeat: 100, seam: 22, ease: 0.062 }
+    });
+
+    /* The stills are lazy, but every one of them sits stacked in the same
+       sticky frame at opacity 0 — the browser has no reason to fetch them until
+       they are needed, and a beat that has not decoded when its crossfade
+       starts shows nothing at all. So warm the whole set once the section is
+       within a screen or so. It is ~1.3 MB for the lot, and this is far enough
+       ahead that they are decoded well before the first seam. */
+    const warm = () => {
+      sec.querySelectorAll('.tk-scene[loading="lazy"]').forEach((img) => { img.loading = 'eager'; });
+    };
+    if (!('IntersectionObserver' in window)) { warm(); return; }
+    this._tkIO = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { warm(); this._tkIO.disconnect(); }
+    }, { rootMargin: '1200px 0px' });
+    this._tkIO.observe(sec);
   }
 
   /* The compact navigation. Below 1100px the inline links are hidden, so this
@@ -4013,9 +4358,14 @@ class Component extends DCLogic {
 
   // Appointment booking: cycle the phone videos, keep the stepper in sync.
   // Replace the 5 placeholder clips in assets/scenes/appointment/booking/ — order = step order.
-  mountAppointment() {
-    const sec = document.getElementById('appointment');
+  /* The booking demo and the raise-a-ticket demo are the same component with
+     different content, so this takes the section id and holds its handles in a
+     list — two instances, no shared state. */
+  mountAppointment(id) {
+    const sec = document.getElementById(id);
     if (!sec) return;
+    const inst = {};
+    (this._steppers = this._steppers || []).push(inst);
     const videos = [].slice.call(sec.querySelectorAll('.appt-video'));
     const steps = [].slice.call(sec.querySelectorAll('.appt-step'));
     const track = sec.querySelector('.appt-track');
@@ -4068,7 +4418,7 @@ class Component extends DCLogic {
     if (prev) prev.addEventListener('click', () => show((cur - 1 + n) % n));
     if (next) next.addEventListener('click', () => show((cur + 1) % n));
 
-    this._apptIO = new IntersectionObserver((es) => {
+    inst.io = new IntersectionObserver((es) => {
       es.forEach((e) => {
         inView = e.isIntersecting;
         if (inView) {
@@ -4077,11 +4427,11 @@ class Component extends DCLogic {
         } else videos.forEach((v) => { try { v.pause(); } catch (e) {} });
       });
     }, { threshold: 0.35 });
-    this._apptIO.observe(sec);
+    inst.io.observe(sec);
 
-    this._apptResize = () => { layout(); renderFill(); };
-    window.addEventListener('resize', this._apptResize);
-    const loop = () => { if (inView && !this.reduced) renderFill(); this._apptRaf = requestAnimationFrame(loop); };
+    inst.resize = () => { layout(); renderFill(); };
+    window.addEventListener('resize', inst.resize);
+    const loop = () => { if (inView && !this.reduced) renderFill(); inst.raf = requestAnimationFrame(loop); };
     requestAnimationFrame(() => { layout(); show(0); if (this.reduced) videos.forEach((v) => { try { v.pause(); } catch (e) {} }); loop(); });
   }
 
@@ -4460,31 +4810,53 @@ class Component extends DCLogic {
     ]).join('');
   }
 
-  function injectCSS() {
-    if (document.getElementById(STYLE_ID)) return;
+  /* One stylesheet per namespace. The default ('wh') emits the CSS exactly as
+     written; any other namespace gets the same rules with every `wh-` token
+     rewritten, so a second flight elsewhere on the page has its own class names
+     and its own custom properties and cannot fight the first one for them. */
+  function injectCSS(ns) {
+    var id = ns === 'wh' ? STYLE_ID : ns + '-scroll-world-css';
+    if (document.getElementById(id)) return;
     var el = document.createElement('style');
-    el.id = STYLE_ID;
-    el.textContent = css();
+    el.id = id;
+    var text = css();
+    if (ns !== 'wh') text = text.replace(/wh-/g, ns + '-');
+    el.textContent = text;
     document.head.appendChild(el);
   }
 
   /* =========================================================== the engine */
   function mountScrollWorld(hero, config) {
     if (!hero || hero.__whMounted) return null;
-    injectCSS();
 
     var cfg = config || {};
+    /* Namespace. Everything this engine touches outside its own element — the
+       stylesheet, the class names it looks for, and the custom properties it
+       writes on <html> — is keyed by this, so the same code can drive two
+       independent flights on one page. Default keeps the original names. */
+    var ns = cfg.ns || 'wh';
+    var Q = ns === 'wh' ? function (s) { return s; }
+                        : function (s) { return s.replace(/wh-/g, ns + '-'); };
+    injectCSS(ns);
+
     var onDarkChange = typeof cfg.onDarkChange === 'function' ? cfg.onDarkChange : function () {};
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     var root = document.documentElement;
-    var track = hero.querySelector('.wh-track');
-    var stage = hero.querySelector('.wh-stage');
-    var heroEl = hero.querySelector('.wh-video');
-    var sceneEls = [].slice.call(hero.querySelectorAll('.wh-scene'));
-    var copyBeats = [].slice.call(hero.querySelectorAll('.wh-beat'));
-    var railItems = [].slice.call(hero.querySelectorAll('.wh-rail-item'));
-    var intro = hero.querySelector('.wh-intro');
+    /* Vars still live on <html> (a dc re-render would wipe them off anything
+       inside <x-dc>), but the name carries the namespace. */
+    var setVar = ns === 'wh'
+      ? function (k, v) { root.style.setProperty(k, v); }
+      : function (k, v) { root.style.setProperty(k.replace('--wh-', '--' + ns + '-'), v); };
+    var S = { setProperty: setVar };
+
+    var track = hero.querySelector(Q('.wh-track'));
+    var stage = hero.querySelector(Q('.wh-stage'));
+    var heroEl = hero.querySelector(Q('.wh-video'));
+    var sceneEls = [].slice.call(hero.querySelectorAll(Q('.wh-scene')));
+    var copyBeats = [].slice.call(hero.querySelectorAll(Q('.wh-beat')));
+    var railItems = [].slice.call(hero.querySelectorAll(Q('.wh-rail-item')));
+    var intro = hero.querySelector(Q('.wh-intro'));
     if (!track || !stage || !heroEl) return null;
     hero.__whMounted = true;
 
@@ -4500,7 +4872,9 @@ class Component extends DCLogic {
        fetched yet (preload="none"). */
     function makeBeat(el, idx) {
       var isVideo = el.tagName === 'VIDEO';
-      var alt = isPhone && isVideo ? el.getAttribute('data-src-mobile') : null;
+      // Image beats take a mobile source too — an <img> swaps src exactly like a
+      // <video>, and a still costs a phone the same bytes a clip does.
+      var alt = isPhone ? el.getAttribute('data-src-mobile') : null;
       if (alt) el.setAttribute('src', alt);
       // Portrait shows only about a quarter of a 16:9 shot, so each beat
       // declares where its subject sits (data-focus-mobile). Desktop barely
@@ -4600,7 +4974,7 @@ class Component extends DCLogic {
       // the card's resting height: 16:9 against the card width (which is
       // min(1000px, 92vw), matching --wh-card-w), capped so it leaves room
       var cardW = Math.min(1000, hero.clientWidth * 0.92);
-      root.style.setProperty('--wh-card-h', Math.round(Math.min(vh * 0.56, cardW * 0.5625)) + 'px');
+      setVar('--wh-card-h', Math.round(Math.min(vh * 0.56, cardW * 0.5625)) + 'px');
     }
 
     /* ---- getting the bytes ---------------------------------------------
@@ -4793,7 +5167,7 @@ class Component extends DCLogic {
       },
       beatAt: function (k) { return seg['beat' + k]; }
     };
-    window.__whFlight = readout;
+    window[ns === 'wh' ? '__whFlight' : '__' + ns + 'Flight'] = readout;
 
     function readTarget() {
       target = clamp01(-track.getBoundingClientRect().top / range);
@@ -4801,7 +5175,7 @@ class Component extends DCLogic {
 
     function apply(p) {
       var q = p * totalVh; // position along the flight, in viewport heights
-      var S = root.style;
+      // S is the namespaced writer built at mount
 
       /* beat 0 — card takeover */
       var open = easeInOut(clamp01((q - seg.open.a) / seg.open.len));
@@ -4955,7 +5329,7 @@ class Component extends DCLogic {
                         (vhPos / totalVh) * range);
     }
 
-    var launchers = [].slice.call(document.querySelectorAll('[data-wh-launch]'));
+    var launchers = [].slice.call(document.querySelectorAll(Q('[data-wh-launch]')));
     function onLaunch(e) {
       if (reduced) return;
       e.preventDefault();
@@ -4982,7 +5356,7 @@ class Component extends DCLogic {
     if (reduced) {
       root.setAttribute('data-wh-reduced', '');
       track.style.height = '';
-      root.style.setProperty('--wh-open', '0');
+      setVar('--wh-open', '0');
       // The hero's poster carries the fallback card on its own — including on
       // iOS Safari, which won't paint a video that has never been played — so
       // nothing needs to load here and no motion is started.

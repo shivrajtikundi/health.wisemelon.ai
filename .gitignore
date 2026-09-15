@@ -5,3 +5,12 @@
 # single-keyframe clips that were replaced on 2026-08-25; they are ~113 MB and
 # only kept locally as a rollback. See CLAUDE.md §5.
 assets/orig-singlekey/
+
+# Raw ticketing sources (177 MB of 4K/5.5K PNGs + the master clip). The
+# web-ready derivatives live in assets/ticketing/ and are committed; these are
+# kept locally so the derivatives can be re-exported. See CLAUDE.md §7b.
+assets/ticketing assets/
+
+# Raw raise-a-ticket source clips (60fps masters). Web encodes live in
+# assets/raiseticket/ and are committed.
+assets/Raising ticket/
