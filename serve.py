@@ -19,6 +19,10 @@ class RangeHandler(http.server.SimpleHTTPRequestHandler):
 
     def send_head(self):
         path = self.translate_path(self.path)
+        # Serve /appointment from appointment.html, as GitHub Pages does, so the
+        # links between the two pages behave the same locally as they do live.
+        if not os.path.exists(path) and os.path.isfile(path + ".html"):
+            path = path + ".html"
         if os.path.isdir(path):
             return super().send_head()
         try:

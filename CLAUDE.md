@@ -35,6 +35,54 @@ assets/
 
 ---
 
+## 1b. The site is two pages
+
+| URL | File | Sections |
+|---|---|---|
+| `/appointment` | `appointment.html` | hero → marquee → appointment → omnichannel → integrations → footer |
+| `/ticketing` | `ticketing.html` | ticketing story → raise-a-ticket demo → footer |
+| `/` | `index.html` | **redirect only** — forwards to `/appointment`, and sends old single-page anchors `#ticketing` / `#raiseticket` to `/ticketing` |
+
+- Both files sit at the repo root, so every `assets/` path is unchanged, and
+  GitHub Pages serves `appointment.html` at `/appointment`. `serve.py` now does
+  the same extensionless lookup, so the links behave identically locally.
+- **Each page is a full, self-contained dc file** — the stylesheet, engine and
+  Component are duplicated in both. A fix to shared chrome (nav, footer, demo
+  popup, Component) **must be made in both files.** Every `mount*()` guards on
+  its section existing, so the same Component runs on either page; `mountFlight`
+  polls for a hero for 4s and then stops.
+- **The nav and footer are identical on both pages** and link across them:
+  Booking → `appointment#appointment`, Omnichannel → `appointment#omnichannel`,
+  Integrations → `appointment#integrations`, Ticketing → `ticketing`. The current
+  page's link carries `aria-current="page"`. Links are relative (no leading
+  slash) so they survive being served from a sub-path. The footer's Product
+  column was repointed from the long-dead `#platform/#journey/#analytics`.
+- **Landing on `#hash` from another page needs help.** dc renders after load, so
+  the browser's own fragment jump lands on the raw template and misses.
+  `jumpToHash()` in the Component re-jumps (at 120ms and 700ms, clear of the
+  fixed bar); on `/appointment` the boot loader locks scroll, so its reveal does
+  the same jump instead of `scrollTo(0,0)`. Verified: `/appointment#integrations`
+  lands 25,000px down with the section flush under the bar.
+- **Each page has its own boot loader, and loads only its own assets.** The
+  loader script is the same code in both files; everything page-specific lives
+  in one `PAGE` block at its top — the selectors it gates on, how many scenes a
+  phone gates on, and the phrases under the bar. It collects URLs from *this*
+  document at DOMContentLoaded, so it cannot fetch the other page's media: that
+  media is not in this document to be found. Verified on fresh loads —
+  `/ticketing` requested no hero, scene, booking, logo or laptop asset, and
+  `/appointment` requested nothing from `ticketing/` or `raiseticket/`.
+  - `/appointment` gates on the hero clip, `s01..s17` and the laptop.
+  - `/ticketing` gates on the 14 stills (`liteScenes: 99`, so phones gate on all
+    of them too — ~1 MB, and a still missing at its seam shows nothing), and says
+    "Loading the patient support journey". The raise-a-ticket clips are left out
+    for the same reason the booking clips are: their elements load themselves.
+  - **Change the loader in both files**, and change only `PAGE` per page.
+- The nav goes dark over **both** flights (`onDarkChange → flightDark`).
+- **`wisehealth-updated.html` (the S3-backed variant) was NOT split** and no
+  longer matches either page; treat it as legacy.
+
+---
+
 ## 2. Brand & design system (SINGLE SOURCE OF TRUTH)
 
 Design tokens live in `:root` inside `WiseHealth.dc.html` and are applied by the dc
